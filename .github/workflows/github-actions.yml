@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.os }} - Go ${{ matrix.go-version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        go-version: ['1.24']
+        os: [ubuntu-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-${{ matrix.go-version }}-
+
+      - name: Install dependencies
+        run: |
+          go mod tidy
+
+      - name: Format Code
+        run: |
+          go fmt ./... && git diff --exit-code
+
+      - name: Check License Header
+        uses: apache/skywalking-eyes/header@main
+        with:
+          config: .licenserc.yaml
+          mode: check
+
+      - name: Set Go version again to override skywalking
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Unit Test
+        run: |
+          go test ./... -v -cover -coverprofile=coverage.txt -covermode=atomic
+
+      - name: Verify build
+        run: |
+          go build ./...
