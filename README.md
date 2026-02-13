@@ -1,5 +1,7 @@
 # Dubbo-Go Extensions
 
+English | [简体中文](./README_CN.md)
+
 Community-maintained extensions for Apache Dubbo-Go v3.
 
 ## Available Extensions

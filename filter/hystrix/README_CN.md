@@ -1,18 +1,18 @@
-# Hystrix Filter
+# Hystrix 过滤器
 
-English | [简体中文](./README_CN.md)
+[English](./README.md) | 简体中文
 
-Circuit breaker filter for dubbo-go using [hystrix-go](https://github.com/afex/hystrix-go).
+基于 [hystrix-go](https://github.com/afex/hystrix-go) 的 dubbo-go 熔断器过滤器。
 
-## Installation
+## 安装
 
 ```bash
 go get github.com/apache/dubbo-go-extensions/filter/hystrix
 ```
 
-## Usage
+## 使用方法
 
-### Consumer Side
+### 消费者端 (Consumer Side)
 
 ```go
 import (
@@ -25,8 +25,8 @@ import (
 )
 
 func init() {
-    // Configure hystrix command for the service method
-    // Resource name format: dubbo:consumer:InterfaceName:group:version:Method
+    // 为服务方法配置 hystrix 命令
+    // 资源名称格式: dubbo:consumer:接口名:group:version:方法名
     cmdName := "dubbo:consumer:greet.GreetService:::Greet"
 
     hystrix.ConfigureCommand(cmdName, hystrix.CommandConfig{
@@ -52,7 +52,7 @@ func main() {
 }
 ```
 
-### Provider Side
+### 提供者端 (Provider Side)
 
 ```go
 import (
@@ -64,29 +64,29 @@ func main() {
     srv, _ := server.NewServer(
         server.WithFilter("hystrix_provider"),
     )
-    // ... rest of server setup
+    // ... 服务器其余配置
 }
 ```
 
-## Filter Keys
+## 过滤器名称
 
-- **Consumer**: `"hystrix_consumer"`
-- **Provider**: `"hystrix_provider"`
+- **消费者端**: `"hystrix_consumer"`
+- **提供者端**: `"hystrix_provider"`
 
-## Resource Naming
+## 资源命名规则
 
-Hystrix commands are named as:
+Hystrix 命令命名格式如下：
 ```
 dubbo:{consumer|provider}:{interface}:{group}:{version}:{method}
 ```
 
-- `{consumer|provider}`: Consumer or provider side
-- `{interface}`: Full interface name (e.g., `greet.GreetService`)
-- `{group}`: Service group (empty if not specified, shown as `::`)
-- `{version}`: Service version (empty if not specified)
-- `{method}`: Method name
+- `{consumer|provider}`: 消费者端或提供者端
+- `{interface}`: 完整接口名（例如 `greet.GreetService`）
+- `{group}`: 服务分组（未指定时为空，显示为 `::`）
+- `{version}`: 服务版本（未指定时为空）
+- `{method}`: 方法名
 
-Examples:
+示例：
 - `dubbo:consumer:greet.GreetService:::Greet`
 - `dubbo:consumer:com.example.UserProvider:::GetUser`
 - `dubbo:consumer:com.example.UserService:group:v1.0:CreateUser`
