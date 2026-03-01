@@ -1,3 +1,22 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements. See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership. The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License. You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
 name: CI
 
 on:
@@ -6,58 +25,76 @@ on:
   pull_request:
     branches: [ main, develop ]
 
+# Cancel in-progress runs for the same branch or PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
 jobs:
-  build:
-    name: ${{ matrix.os }} - Go ${{ matrix.go-version }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        go-version: ['1.24']
-        os: [ubuntu-latest]
-
+  license-check-and-code-format:
+    name: License Check and Code Format
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
-          go-version: ${{ matrix.go-version }}
-
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-${{ matrix.go-version }}-
-
-      - name: Install dependencies
-        run: |
-          go mod tidy
-
-      - name: Format Code
-        run: |
-          go fmt ./... && git diff --exit-code
+          go-version-file: 'go.mod'
+          cache: true
 
       - name: Check License Header
-        uses: apache/skywalking-eyes/header@main
-        with:
-          config: .licenserc.yaml
-          mode: check
+        uses: apache/skywalking-eyes/header@main # NOSONAR
 
-      - name: Set Go version again to override skywalking
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ matrix.go-version }}
-
-      - name: Unit Test
+      - name: Check Golang fmt
         run: |
-          go test ./... -v -cover -coverprofile=coverage.txt -covermode=atomic
+          gofmt -s -w .
+          git diff --exit-code
 
-      - name: Verify build
+  golangci-lint:
+    needs: license-check-and-code-format
+    name: Golang Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v8 # NOSONAR
+        with:
+          version: v2.4.0
+
+  unit-test:
+    needs: golangci-lint
+    name: Unit Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      - name: Run Tests and Generate Coverage
         run: |
-          go build ./...
+          go test ./... -race -coverprofile=coverage.txt -covermode=atomic
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4 # NOSONAR
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./coverage.txt
+          flags: unittests
