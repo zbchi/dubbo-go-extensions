@@ -34,8 +34,8 @@ permissions:
   contents: read
 
 jobs:
-  license-check-and-code-format:
-    name: License Check and Code Format
+  license-check-and-import-format:
+    name: License Check and Import Format
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -47,6 +47,20 @@ jobs:
           go-version-file: 'go.mod'
           cache: true
 
+      - name: Cache imports-formatter
+        id: cache-go-bin
+        uses: actions/cache@v4
+        with:
+          path: ~/go/bin
+          key: ${{ runner.os }}-go-imports-formatter-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-imports-formatter-
+
+      - name: Download imports-formatter if not cached
+        if: steps.cache-go-bin.outputs.cache-hit != 'true'
+        run: |
+          go install github.com/dubbogo/tools/cmd/imports-formatter@latest
+
       - name: Check License Header
         uses: apache/skywalking-eyes/header@main # NOSONAR
 
@@ -55,8 +69,13 @@ jobs:
           gofmt -s -w .
           git diff --exit-code
 
+      - name: Check Import Formatting
+        run: |
+          imports-formatter
+          git diff --exit-code
+
   golangci-lint:
-    needs: license-check-and-code-format
+    needs: license-check-and-import-format
     name: Golang Lint
     runs-on: ubuntu-latest
     steps:
