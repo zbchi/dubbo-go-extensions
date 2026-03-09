@@ -29,6 +29,7 @@
 //	    SleepWindow:            5000,
 //	    ErrorPercentThreshold:  50,
 //	})
+
 package hystrix
 
 import (
