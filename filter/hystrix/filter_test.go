@@ -64,7 +64,7 @@ func TestHystrixFilter_Invoke(t *testing.T) {
 	require.NoError(t, err)
 	mockInvoker := base.NewBaseInvoker(url)
 
-	filter := &Filter{COrP: true}
+	filter := &Filter{isConsumer: true}
 	mockInvocation := invocation.NewRPCInvocation("TestMethod", []any{"OK"}, make(map[string]any))
 
 	ctx := context.Background()
@@ -74,7 +74,7 @@ func TestHystrixFilter_Invoke(t *testing.T) {
 }
 
 func TestHystrixFilter_OnResponse(t *testing.T) {
-	filter := &Filter{COrP: true}
+	filter := &Filter{isConsumer: true}
 	ctx := context.Background()
 	url, err := common.NewURL("dubbo://127.0.0.1:20000/com.ikurento.user.UserProvider")
 	require.NoError(t, err)

@@ -91,12 +91,12 @@ func NewHystrixFilterError(err error, failByHystrix bool) error {
 
 // Filter for Hystrix
 type Filter struct {
-	COrP bool // true for consumer, false for provider
+	isConsumer bool // true for consumer, false for provider
 }
 
 // Invoke is an implementation of filter, provides Hystrix pattern latency and fault tolerance
 func (f *Filter) Invoke(ctx context.Context, invoker base.Invoker, invocation base.Invocation) result.Result {
-	cmdName := getResourceName(invoker, invocation, f.COrP)
+	cmdName := getResourceName(invoker, invocation, f.isConsumer)
 
 	var res result.Result
 	err := hystrix.Do(cmdName, func() error {
@@ -125,12 +125,12 @@ func (f *Filter) OnResponse(ctx context.Context, result result.Result, invoker b
 
 // newFilterConsumer returns Filter instance for consumer
 func newFilterConsumer() filter.Filter {
-	return &Filter{COrP: true}
+	return &Filter{isConsumer: true}
 }
 
 // newFilterProvider returns Filter instance for provider
 func newFilterProvider() filter.Filter {
-	return &Filter{COrP: false}
+	return &Filter{isConsumer: false}
 }
 
 func getResourceName(invoker base.Invoker, invocation base.Invocation, isConsumer bool) string {
