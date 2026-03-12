@@ -36,7 +36,7 @@ import (
 
 func TestNewHystrixFilterError(t *testing.T) {
 	get := NewHystrixFilterError(errors.New("test"), true)
-	assert.True(t, get.(*FilterError).FailByHystrix())
+	assert.True(t, get.(*FilterError).CircuitOpen())
 	assert.Equal(t, "test", get.Error())
 }
 

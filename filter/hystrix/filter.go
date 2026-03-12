@@ -68,24 +68,24 @@ func init() {
 
 // FilterError implements error interface
 type FilterError struct {
-	err           error
-	failByHystrix bool
+	err         error
+	circuitOpen bool
 }
 
 func (hfError *FilterError) Error() string {
 	return hfError.err.Error()
 }
 
-// FailByHystrix returns whether the fails causing by Hystrix
-func (hfError *FilterError) FailByHystrix() bool {
-	return hfError.failByHystrix
+// CircuitOpen returns whether the circuit is open
+func (hfError *FilterError) CircuitOpen() bool {
+	return hfError.circuitOpen
 }
 
 // NewHystrixFilterError return a FilterError instance
-func NewHystrixFilterError(err error, failByHystrix bool) error {
+func NewHystrixFilterError(err error, circuitOpen bool) error {
 	return &FilterError{
-		err:           err,
-		failByHystrix: failByHystrix,
+		err:         err,
+		circuitOpen: circuitOpen,
 	}
 }
 
@@ -103,12 +103,16 @@ func (f *Filter) Invoke(ctx context.Context, invoker base.Invoker, invocation ba
 		res = invoker.Invoke(ctx, invocation)
 		return res.Error()
 	}, func(err error) error {
-		// Circuit is open, return fallback error
-		_, ok := err.(hystrix.CircuitError)
-		logger.Debugf("[Hystrix Filter] Circuit opened for %s, failed by hystrix: %v", cmdName, ok)
+		// Return fallback error
+		_, isCircuitOpen := err.(hystrix.CircuitError)
+		if isCircuitOpen {
+			logger.Debugf("[Hystrix Filter] Circuit opened for %s", cmdName)
+		} else {
+			logger.Debugf("[Hystrix Filter] Hystrix fallback for %s: %v", cmdName, err)
+		}
 		res = &result.RPCResult{}
 		res.SetResult(nil)
-		res.SetError(NewHystrixFilterError(err, ok))
+		res.SetError(NewHystrixFilterError(err, isCircuitOpen))
 		return err
 	})
 
