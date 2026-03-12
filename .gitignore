@@ -1,0 +1,44 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.DS_Store
+*__debug_bin*
+
+dist/
+*.log
+# Test binary, build with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+coverage.txt
+
+# .env is a user-specific environment configuration file
+*.env
+
+*.idea
+*.iml
+target/
+classes
+dubbo.json
+
+# Gopkg.lock
+vendor/
+
+logs/
+.vscode/
+cache/
+log/
+coverage.txt
+
+# maven
+.classpath
+.project
+.settings/
+
+# license header
+/license-header-checker-linux/
+/license-header-checker-linux.zip
