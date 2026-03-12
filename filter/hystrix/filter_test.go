@@ -50,8 +50,8 @@ func TestGetHystrixFilter(t *testing.T) {
 
 func TestHystrixFilter_Invoke(t *testing.T) {
 	// Configure hystrix command for testing
-	// Resource name format: dubbo:consumer:InterfaceName:group:version:Method(paramTypes)
-	cmdName := "dubbo:consumer:com.ikurento.user.UserProvider:::TestMethod()"
+	// Resource name format: dubbo:consumer:InterfaceName:group:version:Method
+	cmdName := "dubbo:consumer:com.ikurento.user.UserProvider:::TestMethod"
 	hystrix.ConfigureCommand(cmdName, hystrix.CommandConfig{
 		Timeout:                1000,
 		MaxConcurrentRequests:  10,

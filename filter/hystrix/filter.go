@@ -20,9 +20,9 @@
 //
 //	import "github.com/afex/hystrix-go/hystrix"
 //
-//	// Resource name format: dubbo:consumer:InterfaceName:group:version:Method(param1,param2)
-//	// Example: dubbo:consumer:com.example.GreetService:::Greet(string,string)
-//	hystrix.ConfigureCommand("dubbo:consumer:com.example.GreetService:::Greet(string,string)", hystrix.CommandConfig{
+//	// Resource name format: dubbo:consumer:InterfaceName:group:version:Method
+//	// Example: dubbo:consumer:com.example.GreetService:::Greet
+//	hystrix.ConfigureCommand("dubbo:consumer:com.example.GreetService:::Greet", hystrix.CommandConfig{
 //	    Timeout:                1000,
 //	    MaxConcurrentRequests:  20,
 //	    RequestVolumeThreshold: 20,
@@ -142,21 +142,10 @@ func getResourceName(invoker base.Invoker, invocation base.Invocation, isConsume
 		sb.WriteString(DefaultProviderPrefix)
 	}
 
-	// Format: interface:group:version
+	// Format: interface:group:version:method
 	sb.WriteString(getColonSeparatedKey(invoker.GetURL()))
 	sb.WriteString(":")
 	sb.WriteString(invocation.MethodName())
-	sb.WriteString("(")
-
-	isFirst := true
-	for _, v := range invocation.ParameterTypes() {
-		if !isFirst {
-			sb.WriteString(",")
-		}
-		sb.WriteString(v.Name())
-		isFirst = false
-	}
-	sb.WriteString(")")
 
 	return sb.String()
 }
